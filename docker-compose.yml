@@ -1,0 +1,143 @@
+version: "3.9"
+
+# ─── RED ──────────────────────────────────────────────────────────────────────
+
+networks:
+  dfs-network:
+    driver: bridge
+
+# ─── VOLÚMENES ────────────────────────────────────────────────────────────────
+
+volumes:
+  namenode_data:
+  datanode1_data:
+  datanode2_data:
+  datanode3_data:
+  client_data:
+
+# ─── SERVICIOS ────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── NameNode ──────────────────────────────────────────────────────────────
+
+  namenode:
+    build:
+      context: ./namenode
+      dockerfile: Dockerfile
+    container_name: namenode
+    networks:
+      - dfs-network
+    ports:
+      - "${NAMENODE_PORT:-8000}:8000"
+    volumes:
+      - namenode_data:/data
+    environment:
+      - DB_PATH=/data/metadata.db
+      - BLOCK_SIZE=${BLOCK_SIZE:-67108864}
+      - HEARTBEAT_TIMEOUT=${HEARTBEAT_TIMEOUT:-90}
+      - REPLICATION_FACTOR=${REPLICATION_FACTOR:-2}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ── DataNode 1 ────────────────────────────────────────────────────────────
+
+  datanode1:
+    build:
+      context: ./datanode
+      dockerfile: Dockerfile
+    container_name: datanode1
+    networks:
+      - dfs-network
+    ports:
+      - "8001:8001"
+    volumes:
+      - datanode1_data:/data/blocks
+    environment:
+      - NODE_ID=DN1
+      - PORT=8001
+      - HOST=datanode1
+      - NAMENODE_URL=http://namenode:8000
+      - BLOCKS_DIR=/data/blocks
+      - HEARTBEAT_INTERVAL=${HEARTBEAT_INTERVAL:-30}
+    depends_on:
+      namenode:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── DataNode 2 ────────────────────────────────────────────────────────────
+
+  datanode2:
+    build:
+      context: ./datanode
+      dockerfile: Dockerfile
+    container_name: datanode2
+    networks:
+      - dfs-network
+    ports:
+      - "8002:8002"
+    volumes:
+      - datanode2_data:/data/blocks
+    environment:
+      - NODE_ID=DN2
+      - PORT=8002
+      - HOST=datanode2
+      - NAMENODE_URL=http://namenode:8000
+      - BLOCKS_DIR=/data/blocks
+      - HEARTBEAT_INTERVAL=${HEARTBEAT_INTERVAL:-30}
+    depends_on:
+      namenode:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── DataNode 3 ────────────────────────────────────────────────────────────
+
+  datanode3:
+    build:
+      context: ./datanode
+      dockerfile: Dockerfile
+    container_name: datanode3
+    networks:
+      - dfs-network
+    ports:
+      - "8003:8003"
+    volumes:
+      - datanode3_data:/data/blocks
+    environment:
+      - NODE_ID=DN3
+      - PORT=8003
+      - HOST=datanode3
+      - NAMENODE_URL=http://namenode:8000
+      - BLOCKS_DIR=/data/blocks
+      - HEARTBEAT_INTERVAL=${HEARTBEAT_INTERVAL:-30}
+    depends_on:
+      namenode:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Cliente CLI ───────────────────────────────────────────────────────────
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: dfs-client
+    networks:
+      - dfs-network
+    volumes:
+      - client_data:/data
+    environment:
+      - NAMENODE_URL=http://namenode:8000
+      - BLOCK_SIZE=${BLOCK_SIZE:-67108864}
+    depends_on:
+      namenode:
+        condition: service_healthy
+    profiles:
+      - client
+    stdin_open: true
+    tty: true

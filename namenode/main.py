@@ -11,10 +11,10 @@ import os
 app = FastAPI(title="DFS NameNode")
 security = HTTPBasic()
  
-DB_PATH = "namenode/metadata.db"
-BLOCK_SIZE = 64 * 1024 * 1024  # 64 MB
-HEARTBEAT_TIMEOUT = 90  # segundos
-REPLICATION_FACTOR = 2
+DB_PATH = os.environ.get("DB_PATH", "namenode/metadata.db")
+BLOCK_SIZE = int(os.environ.get("BLOCK_SIZE", 64 * 1024 * 1024))  # 64 MB
+HEARTBEAT_TIMEOUT = int(os.environ.get("HEARTBEAT_TIMEOUT", 90))  # segundos
+REPLICATION_FACTOR = int(os.environ.get("REPLICATION_FACTOR", 2))
  
 # ─── BASE DE DATOS ────────────────────────────────────────────────────────────
  
@@ -24,7 +24,9 @@ def get_db():
     return conn
  
 def init_db():
-    os.makedirs("namenode", exist_ok=True)
+    db_dir = os.path.dirname(DB_PATH)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
     conn = get_db()
     c = conn.cursor()
     c.executescript("""

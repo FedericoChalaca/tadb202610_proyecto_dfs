@@ -4,17 +4,15 @@ import httpx
 import asyncio
 import os
 import time
-import sys
  
 # ─── CONFIGURACIÓN ────────────────────────────────────────────────────────────
  
-# Se pasan como argumentos al correr: python datanode/main.py DN1 8001
-NODE_ID = sys.argv[1] if len(sys.argv) > 1 else "DN1"
-PORT    = int(sys.argv[2]) if len(sys.argv) > 2 else 8001
-HOST    = "localhost"
-NAMENODE_URL = "http://localhost:8000"
-BLOCKS_DIR   = f"datanode/blocks_{NODE_ID}"
-HEARTBEAT_INTERVAL = 30  # segundos
+NODE_ID          = os.environ.get("NODE_ID", "DN1")
+PORT             = int(os.environ.get("PORT", 8001))
+HOST             = os.environ.get("HOST", "localhost")
+NAMENODE_URL     = os.environ.get("NAMENODE_URL", "http://localhost:8000")
+BLOCKS_DIR       = os.environ.get("BLOCKS_DIR", f"datanode/blocks_{NODE_ID}")
+HEARTBEAT_INTERVAL = int(os.environ.get("HEARTBEAT_INTERVAL", 30))  # segundos
  
 from contextlib import asynccontextmanager
  

@@ -4,8 +4,8 @@ import os
 import sys
 import math
  
-NAMENODE_URL = "http://localhost:8000"
-BLOCK_SIZE = 64 * 1024 * 1024  # 64 MB
+NAMENODE_URL = os.environ.get("NAMENODE_URL", "http://localhost:8000")
+BLOCK_SIZE = int(os.environ.get("BLOCK_SIZE", 64 * 1024 * 1024))  # 64 MB
  
 # ─── AUTENTICACIÓN ────────────────────────────────────────────────────────────
  

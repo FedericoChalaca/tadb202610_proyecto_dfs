@@ -1,0 +1,30 @@
+version: "3.9"
+
+# ─── Docker Compose para NameNode en EC2 ──────────────────────────────────────
+# Uso: docker compose -f docker-compose.namenode.yml up -d
+
+volumes:
+  namenode_data:
+
+services:
+  namenode:
+    build:
+      context: ../namenode
+      dockerfile: Dockerfile
+    container_name: namenode
+    ports:
+      - "8000:8000"
+    volumes:
+      - namenode_data:/data
+    environment:
+      - DB_PATH=/data/metadata.db
+      - BLOCK_SIZE=${BLOCK_SIZE:-67108864}
+      - HEARTBEAT_TIMEOUT=${HEARTBEAT_TIMEOUT:-90}
+      - REPLICATION_FACTOR=${REPLICATION_FACTOR:-2}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped

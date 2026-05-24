@@ -6,6 +6,21 @@ import math
  
 NAMENODE_URL = os.environ.get("NAMENODE_URL", "http://localhost:8000")
 BLOCK_SIZE = int(os.environ.get("BLOCK_SIZE", 64 * 1024 * 1024))  # 64 MB
+
+# ─── CARGA DE ARCHIVO .env ────────────────────────────────────────────────────
+
+def load_env_file(env_path):
+    """Carga variables de entorno desde un archivo .env"""
+    if not os.path.exists(env_path):
+        print(f"Error: archivo '{env_path}' no encontrado.")
+        return False
+    with open(env_path) as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                os.environ[key.strip()] = value.strip()
+    return True
  
 # ─── AUTENTICACIÓN ────────────────────────────────────────────────────────────
  
@@ -287,7 +302,7 @@ def cmd_status(args):
         resp = httpx.get(f"{NAMENODE_URL}/datanode/status")
         nodes = resp.json()
         print("\nEstado del cluster DFS:")
-        print(f"  NameNode: http://localhost:8000 ✓")
+        print(f"  NameNode: {NAMENODE_URL} ✓")
         for n in nodes:
             estado = "✓ activo" if n["active"] else "✗ caído"
             print(f"  {n['node_id']}: {n['host']}:{n['port']} — {estado}")
@@ -301,6 +316,7 @@ def main():
         prog="dfs",
         description="Cliente CLI para el Sistema de Archivos Distribuidos"
     )
+    parser.add_argument("--env", help="Archivo .env con configuración (ej: .env.client)", default=None)
     subparsers = parser.add_subparsers(dest="command")
  
     # login / logout / register
@@ -335,6 +351,16 @@ def main():
     subparsers.add_parser("status", help="Ver estado del cluster")
  
     args = parser.parse_args()
+ 
+    # ── Cargar archivo .env si se proporcionó o existe .env.client ──
+    global NAMENODE_URL, BLOCK_SIZE
+    if args.env:
+        load_env_file(args.env)
+    elif os.path.exists(".env.client"):
+        load_env_file(".env.client")
+    # Recargar variables después de cargar .env
+    NAMENODE_URL = os.environ.get("NAMENODE_URL", "http://localhost:8000")
+    BLOCK_SIZE = int(os.environ.get("BLOCK_SIZE", 67108864))
  
     commands = {
         "login": cmd_login,

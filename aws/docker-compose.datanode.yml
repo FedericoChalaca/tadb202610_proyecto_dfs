@@ -1,0 +1,32 @@
+version: "3.9"
+
+# ─── Docker Compose para DataNode en EC2 ──────────────────────────────────────
+# Uso: docker compose -f docker-compose.datanode.yml up -d
+#
+# Variables requeridas en .env:
+#   NODE_ID       — Identificador del nodo (DN1, DN2, DN3)
+#   PORT          — Puerto del DataNode (8001)
+#   HOST          — IP pública de esta EC2 (para que el cliente pueda conectarse)
+#   NAMENODE_URL  — URL del NameNode (http://<IP_NAMENODE>:8000)
+
+volumes:
+  datanode_data:
+
+services:
+  datanode:
+    build:
+      context: ../datanode
+      dockerfile: Dockerfile
+    container_name: datanode
+    ports:
+      - "${PORT:-8001}:${PORT:-8001}"
+    volumes:
+      - datanode_data:/data/blocks
+    environment:
+      - NODE_ID=${NODE_ID:-DN1}
+      - PORT=${PORT:-8001}
+      - HOST=${HOST:-localhost}
+      - NAMENODE_URL=${NAMENODE_URL:-http://localhost:8000}
+      - BLOCKS_DIR=/data/blocks
+      - HEARTBEAT_INTERVAL=${HEARTBEAT_INTERVAL:-30}
+    restart: unless-stopped

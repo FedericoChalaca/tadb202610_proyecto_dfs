@@ -1,5 +1,7 @@
 # DFS - Sistema de Archivos Distribuidos por Bloques
 
+https://www.youtube.com/watch?v=7cvO7bxfZpU
+
 Proyecto para el curso de Arquitecturas de Nube y Sistemas Distribuidos - UPB 2026
 
 ## Componentes

@@ -175,6 +175,8 @@ const input = rawPath
 const dash = buildDashboard(input, cfg);
 await mkdir(new URL('data/', ROOT), { recursive: true });
 await writeFile(new URL('data/dashboard.json', ROOT), JSON.stringify(dash, null, 2));
+// Copia como script para que index.html funcione abierto con doble clic (file://), donde fetch() está bloqueado.
+await writeFile(new URL('data/dashboard.js', ROOT), `window.DASHBOARD = ${JSON.stringify(dash).replace(/</g, '\\u003c')};\n`);
 
 if (!quiet) {
   const k = dash.kpis;

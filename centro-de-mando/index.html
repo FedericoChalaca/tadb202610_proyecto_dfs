@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex">
+<title>Centro de Mando</title>
+<style>
+  :root {
+    --bg: #0a0f0d;
+    --surface: #0f1714;
+    --surface-2: #131e1a;
+    --line: #1d2a25;
+    --text: #e6efe9;
+    --muted: #8a9a92;
+    --faint: #5c6b64;
+    --green: #22c55e;
+    --green-soft: rgba(34, 197, 94, .12);
+    --cyan: #22d3ee;
+    --amber: #f59e0b;
+    --amber-soft: rgba(245, 158, 11, .12);
+    --red: #f87171;
+    --radius: 14px;
+    --font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 var(--font);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 20px 16px 48px; }
+
+  /* ---------- Encabezado ---------- */
+  header {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding-bottom: 16px; border-bottom: 1px solid var(--line); margin-bottom: 20px;
+  }
+  .tag {
+    font: 600 11px/1 var(--mono); letter-spacing: .14em; color: var(--green);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .tag::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+    box-shadow: 0 0 10px var(--green);
+  }
+  .refreshed { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  .refreshed.stale { color: var(--amber); }
+  .clock { font: 600 22px/1 var(--mono); color: var(--cyan); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+
+  /* ---------- Tarjeta principal ---------- */
+  .hero {
+    position: relative; overflow: hidden;
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 28px;
+    padding: 28px; border-radius: var(--radius);
+    background:
+      radial-gradient(600px 240px at 0% 50%, rgba(34, 197, 94, .10), transparent 70%),
+      var(--surface);
+    border: 1px solid var(--line);
+  }
+  .orb { position: relative; width: 120px; height: 120px; flex: none; }
+  .orb .core {
+    position: absolute; inset: 38px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #86efac, var(--green) 55%, #15803d);
+    box-shadow: 0 0 24px rgba(34, 197, 94, .7), 0 0 60px rgba(34, 197, 94, .35);
+  }
+  .orb .ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 1.5px solid var(--green); opacity: 0;
+    animation: pulse 3.6s cubic-bezier(.2, .6, .3, 1) infinite;
+  }
+  .orb .ring:nth-child(2) { animation-delay: 1.2s; }
+  .orb .ring:nth-child(3) { animation-delay: 2.4s; }
+  .orb .static {
+    position: absolute; border-radius: 50%; border: 1px solid rgba(34, 197, 94, .25);
+  }
+  .orb .s1 { inset: 26px; } .orb .s2 { inset: 12px; border-color: rgba(34, 197, 94, .14); }
+  @keyframes pulse {
+    0% { transform: scale(.35); opacity: .9; }
+    100% { transform: scale(1); opacity: 0; }
+  }
+  .greet { font-size: 26px; font-weight: 650; letter-spacing: -.01em; margin: 0 0 6px; }
+  .summary { color: var(--muted); margin: 0; max-width: 52ch; }
+  .summary b { color: var(--text); font-weight: 600; }
+  .summary .warn { color: var(--amber); }
+  .bigtime { text-align: right; }
+  .bigtime .t { font: 600 52px/1 var(--mono); color: var(--cyan); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .bigtime .d { color: var(--muted); font-size: 13px; margin-top: 8px; }
+
+  /* ---------- KPIs ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+  .kpi {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 16px; min-width: 0;
+  }
+  .kpi .label { color: var(--muted); font-size: 12px; }
+  .kpi .value { font-size: 30px; font-weight: 650; line-height: 1.15; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .kpi .sub { color: var(--faint); font-size: 12px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi.alert .value { color: var(--amber); }
+  .kpi.next .value { font: 600 24px/1.3 var(--mono); color: var(--cyan); }
+
+  /* ---------- Filtros ---------- */
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 24px 0 12px; }
+  .chip {
+    appearance: none; cursor: pointer;
+    font: 500 13px/1 var(--font); color: var(--muted);
+    background: transparent; border: 1px solid var(--line); border-radius: 999px;
+    padding: 9px 14px; display: inline-flex; align-items: center; gap: 8px;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .chip:hover { color: var(--text); border-color: #2b3d36; }
+  .chip:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+  .chip[aria-pressed="true"] { color: var(--green); border-color: var(--green); background: var(--green-soft); }
+  .chip .n {
+    font: 600 11px/1 var(--mono); padding: 3px 6px; border-radius: 999px;
+    background: var(--surface-2); color: var(--text);
+  }
+  .chip[aria-pressed="true"] .n { background: var(--green); color: #052e14; }
+
+  /* ---------- Lista ---------- */
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .group-title {
+    font: 600 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--faint);
+    padding: 16px 18px 8px;
+  }
+  .item {
+    display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; align-items: center;
+    padding: 14px 18px; border-top: 1px solid var(--line); text-decoration: none;
+    transition: background .12s;
+  }
+  .group-title + .item { border-top: 0; }
+  a.item:hover { background: var(--surface-2); }
+  a.item:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
+  .item .main { min-width: 0; }
+  .item .who { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .item .what { font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .meta { text-align: right; white-space: nowrap; }
+  .item .open { color: var(--faint); font-size: 12px; }
+  a.item:hover .open { color: var(--green); }
+  .age { font: 600 12px/1 var(--mono); padding: 5px 8px; border-radius: 6px; background: var(--surface-2); color: var(--muted); display: inline-block; }
+  .age.old { background: var(--amber-soft); color: var(--amber); }
+  .pill { font: 600 10px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 6px; border-radius: 5px; }
+  .pill.vip { background: var(--green-soft); color: var(--green); }
+  .pill.reason { background: var(--surface-2); color: var(--muted); }
+  .pill.clash { background: var(--amber-soft); color: var(--amber); }
+  .time { font: 600 15px/1 var(--mono); color: var(--cyan); font-variant-numeric: tabular-nums; }
+  .item.past { opacity: .45; }
+  .item.ev { grid-template-columns: 92px 1fr auto; }
+  .item.ev .time small { display: block; color: var(--faint); font-size: 11px; margin-top: 4px; }
+  .banner {
+    margin: 12px 18px 4px; padding: 10px 12px; border-radius: 10px;
+    background: var(--amber-soft); color: var(--amber); font-size: 13px;
+  }
+  .empty { padding: 32px 18px; color: var(--muted); text-align: center; }
+
+  footer { color: var(--faint); font-size: 12px; margin-top: 20px; line-height: 1.7; }
+  footer code { font-family: var(--mono); color: var(--muted); }
+  .error { padding: 40px 20px; text-align: center; color: var(--muted); }
+  .error code { font-family: var(--mono); color: var(--green); }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 760px) {
+    .hero { grid-template-columns: auto 1fr; gap: 18px; padding: 20px; }
+    .bigtime { grid-column: 1 / -1; text-align: left; display: flex; align-items: baseline; gap: 12px; }
+    .bigtime .t { font-size: 40px; }
+    .bigtime .d { margin: 0; }
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 480px) {
+    .wrap { padding: 16px 16px 40px; }
+    header .clock { font-size: 18px; }
+    .hero { grid-template-columns: 1fr; }
+    .orb { width: 84px; height: 84px; }
+    .orb .core { inset: 27px; } .orb .s1 { inset: 18px; } .orb .s2 { inset: 8px; }
+    .greet { font-size: 22px; }
+    .item { padding: 12px 14px; }
+    .item.ev { grid-template-columns: 64px 1fr; }
+    .item.ev .meta { display: none; }
+    .item .meta .open { display: none; }
+    .kpi .value { font-size: 26px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .orb .ring { animation: none; opacity: .3; transform: scale(.85); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="error">Cargando…</div>
+</div>
+
+<!-- Generado por `npm run refresh`. Se carga como script para que funcione abriendo el archivo con doble clic. -->
+<script src="data/dashboard.js"></script>
+<script>
+(() => {
+  'use strict';
+  const app = document.getElementById('app');
+
+  // ---------- utilidades ----------
+  /** Crea un elemento. Todo el texto entra por textContent: nunca se interpreta HTML de los correos. */
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k === 'class') el.className = v;
+      else if (k === 'href') { if (/^https:\/\//.test(v)) el.href = v; }
+      else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? '' : v);
+    }
+    for (const kid of kids.flat()) {
+      if (kid == null || kid === false) continue;
+      el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+    }
+    return el;
+  }
+  const linkAttrs = (url) => (url ? { href: url, target: '_blank', rel: 'noopener noreferrer' } : {});
+
+  async function load() {
+    if (window.DASHBOARD) return window.DASHBOARD;
+    const r = await fetch('data/dashboard.json', { cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  }
+
+  // ---------- render ----------
+  function render(d) {
+    const tz = d.timezone || 'America/Bogota';
+    const fmt = (opts) => new Intl.DateTimeFormat('es-CO', { timeZone: tz, ...opts });
+    const fTime = fmt({ hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+    const fTimeS = fmt({ hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+    const fDate = fmt({ weekday: 'long', day: 'numeric', month: 'long' });
+    const fDay = fmt({ weekday: 'long', day: 'numeric', month: 'short' });
+    const hourNow = () => +fmt({ hour: 'numeric', hourCycle: 'h23' }).format(new Date());
+    const dayKey = (date) => {
+      const p = Object.fromEntries(fmt({ year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date).map((x) => [x.type, x.value]));
+      return `${p.year}-${p.month}-${p.day}`;
+    };
+    const greetWord = () => { const hr = hourNow(); return hr < 12 ? 'Buen día' : hr < 19 ? 'Buenas tardes' : 'Buenas noches'; };
+    const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+    const longDate = (dt) => cap(fDate.format(dt));
+    const ageLabel = (n) => (n <= 0 ? 'hoy' : n === 1 ? '1 día' : `${n} días`);
+
+    const generated = new Date(d.generatedAt);
+    const ageMin = Math.round((Date.now() - generated) / 60000);
+    const stale = ageMin > 18 * 60;
+    const k = d.kpis;
+    const todayKey = dayKey(new Date());
+    const tomorrowKey = dayKey(new Date(Date.now() + 86400000));
+    const dayName = (key) => key === todayKey ? 'Hoy' : key === tomorrowKey ? 'Mañana'
+      : fDay.format(new Date(`${key}T12:00:00`));
+
+    // Encabezado
+    const clock = h('div', { class: 'clock', 'aria-label': 'Hora actual' }, fTimeS.format(new Date()));
+    const refreshed = h('div', { class: 'refreshed' + (stale ? ' stale' : '') },
+      `Actualizado ${fTime.format(generated)} · ${relTime(ageMin)}`, stale ? ' · datos viejos, ejecuta npm run refresh' : '');
+    const header = h('header', null,
+      h('div', null, h('div', { class: 'tag' }, 'GMAIL · CALENDARIO'), refreshed),
+      clock);
+
+    // Tarjeta principal
+    const todayClash = d.calendar.conflicts.filter((c) => c.day === todayKey);
+    const greet = h('h1', { class: 'greet' }, `${greetWord()}, ${d.name}`);
+    const bigT = h('div', { class: 't' }, fTime.format(new Date()));
+    const bigD = h('div', { class: 'd' }, longDate(new Date()));
+    const hero = h('section', { class: 'hero', 'aria-label': 'Resumen del día' },
+      h('div', { class: 'orb', 'aria-hidden': 'true' },
+        h('span', { class: 'ring' }), h('span', { class: 'ring' }), h('span', { class: 'ring' }),
+        h('span', { class: 'static s2' }), h('span', { class: 'static s1' }), h('span', { class: 'core' })),
+      h('div', null, greet, summaryNode()),
+      h('div', { class: 'bigtime' }, bigT, bigD));
+
+    function summaryNode() {
+      const n = (x) => h('b', null, String(x));
+      const parts = [
+        [n(k.meetingsToday), k.meetingsToday === 1 ? ' reunión' : ' reuniones'],
+        [n(k.urgent), k.urgent === 1 ? ' correo que pide acción' : ' correos que piden acción'],
+        [n(k.unanswered), ' sin respuesta'],
+      ];
+      if (todayClash.length) {
+        parts.push([h('span', { class: 'warn' },
+          todayClash.length === 1 ? `un choque de agenda a las ${todayClash[0].atLocal}`
+            : `${todayClash.length} choques de agenda`)]);
+      }
+      const p = h('p', { class: 'summary' }, 'Hoy tienes ');
+      parts.forEach((part, i) => {
+        if (i > 0) p.append(i === parts.length - 1 ? ' y ' : ', ');
+        p.append(...part);
+      });
+      p.append('.');
+      return p;
+    }
+
+    // KPIs
+    const kpi = (label, value, sub, cls) => h('div', { class: 'kpi ' + (cls || '') },
+      h('div', { class: 'label' }, label), h('div', { class: 'value' }, value), sub ? h('div', { class: 'sub' }, sub) : null);
+    const kpis = h('section', { class: 'kpis', 'aria-label': 'Indicadores' },
+      kpi('Reuniones de la semana', k.meetingsWeek, `${k.meetingsToday} hoy`),
+      kpi('Sin contestar a tiempo', k.unanswered, `más de 2 días`, k.unanswered ? 'alert' : ''),
+      kpi('Urgentes', k.urgent, 'últimos 7 días', k.urgent ? 'alert' : ''),
+      kpi('Próximo evento', k.nextEvent ? k.nextEvent.startLocal : '—',
+        k.nextEvent ? `${dayName(k.nextEvent.day)} · ${k.nextEvent.title}` : 'Nada pendiente esta semana', 'next'));
+
+    // Filtros + lista
+    const views = {
+      unanswered: { label: 'Sin contestar', count: d.mail.unanswered.length, render: () => mailList(d.mail.unanswered, 'Nadie espera tu respuesta. 👌') },
+      urgent: { label: 'Urgentes', count: d.mail.action.length, render: () => mailList(d.mail.action, 'Ningún correo pide acción.') },
+      agenda: { label: 'Agenda', count: d.calendar.week.filter((e) => !e.past).length, render: agenda },
+      travel: { label: 'Viajes', count: d.mail.travel.length, render: () => mailList(d.mail.travel, 'Sin viajes en los últimos 30 días.') },
+    };
+    const saved = readPref();
+    let active = views[saved] ? saved : (Object.keys(views).find((v) => views[v].count) || 'agenda');
+    const panel = h('section', { class: 'panel', 'aria-live': 'polite' });
+    const chipEls = {};
+    const chips = h('nav', { class: 'chips', 'aria-label': 'Filtros' },
+      Object.entries(views).map(([key, v]) => (chipEls[key] = h('button', {
+        class: 'chip', type: 'button', 'aria-pressed': String(key === active),
+        onclick: () => select(key),
+      }, v.label, h('span', { class: 'n' }, String(v.count))))));
+
+    function select(key) {
+      active = key;
+      for (const [k2, el] of Object.entries(chipEls)) el.setAttribute('aria-pressed', String(k2 === key));
+      panel.replaceChildren(...[].concat(views[key].render()));
+      savePref(key);
+    }
+
+    function mailList(items, emptyText) {
+      if (!items.length) return h('div', { class: 'empty' }, emptyText);
+      return items.map((m) => h('a', { class: 'item', ...linkAttrs(m.url) },
+        h('div', { class: 'main' },
+          h('div', { class: 'who' },
+            m.from,
+            m.vip ? h('span', { class: 'pill vip' }, 'VIP') : null,
+            (m.reasons || []).map((r) => h('span', { class: 'pill reason' }, r)),
+            m.count > 1 ? h('span', { class: 'pill reason' }, `${m.count} alertas`) : null),
+          h('div', { class: 'what', title: m.subject }, m.subject)),
+        h('div', { class: 'meta' },
+          h('span', { class: 'age' + (m.ageDays >= 3 ? ' old' : '') }, ageLabel(m.ageDays)),
+          h('div', { class: 'open' }, 'Abrir en Gmail ↗'))));
+    }
+
+    const fShortDay = fmt({ weekday: 'short' });
+    function endLabel(e) {
+      const end = new Date(e.end);
+      return dayKey(end) === e.day ? `→ ${e.endLocal}` : `→ ${fShortDay.format(end).replace('.', '')} ${e.endLocal}`;
+    }
+
+    function agenda() {
+      const out = [];
+      const upcomingClash = d.calendar.conflicts.filter((c) => c.day >= todayKey);
+      for (const c of upcomingClash) {
+        out.push(h('div', { class: 'banner', role: 'note' },
+          `Choque ${dayName(c.day).toLowerCase()} a las ${c.atLocal}: «${c.a}» y «${c.b}».`));
+      }
+      const byDay = new Map();
+      for (const e of d.calendar.week) {
+        if (e.day < todayKey) continue;
+        if (!byDay.has(e.day)) byDay.set(e.day, []);
+        byDay.get(e.day).push(e);
+      }
+      if (!byDay.size) out.push(h('div', { class: 'empty' }, 'No quedan eventos esta semana.'));
+      for (const [day, evs] of byDay) {
+        out.push(h('div', { class: 'group-title' }, dayName(day)));
+        for (const e of evs) {
+          out.push(h('a', { class: 'item ev' + (e.past ? ' past' : ''), ...linkAttrs(e.url) },
+            h('div', { class: 'time' }, e.startLocal, e.endLocal ? h('small', null, endLabel(e)) : null),
+            h('div', { class: 'main' },
+              h('div', { class: 'what', title: e.title }, e.title),
+              h('div', { class: 'who' },
+                e.conflict ? h('span', { class: 'pill clash' }, 'Choque') : null,
+                e.location ? h('span', null, `📍 ${e.location}`) : null,
+                e.attendees.length ? h('span', null, `👥 ${e.attendees.join(', ')}`) : null)),
+            h('div', { class: 'meta' }, h('div', { class: 'open' }, 'Calendar ↗'))));
+        }
+      }
+      return out;
+    }
+
+    // Pie
+    const ex = Object.entries(d.diagnostics?.excluded || {}).map(([why, n]) => `${n} por ${why}`).join(', ');
+    const footer = h('footer', null,
+      h('div', null, 'Solo lectura · fuente ', h('code', null, d.source),
+        d.partial ? ' · muestra parcial' : ''),
+      ex ? h('div', null, `Filtrados como ruido: ${ex}.`) : null,
+      h('div', null, 'Refrescar: ', h('code', null, 'npm run refresh')));
+
+    app.replaceChildren(header, hero, kpis, chips, panel, footer);
+    select(active);
+
+    // Reloj en vivo; el saludo cambia solo si pasa de mañana a tarde.
+    setInterval(() => {
+      const now = new Date();
+      clock.textContent = fTimeS.format(now);
+      bigT.textContent = fTime.format(now);
+      bigD.textContent = longDate(now);
+      greet.textContent = `${greetWord()}, ${d.name}`;
+    }, 1000);
+  }
+
+  function relTime(min) {
+    if (min < 1) return 'hace un momento';
+    if (min < 60) return `hace ${min} min`;
+    const hrs = Math.round(min / 60);
+    return hrs < 24 ? `hace ${hrs} h` : `hace ${Math.round(hrs / 24)} d`;
+  }
+  function readPref() { try { return localStorage.getItem('cdm.filter'); } catch { return null; } }
+  function savePref(v) { try { localStorage.setItem('cdm.filter', v); } catch { /* sin almacenamiento */ } }
+
+  load().then(render).catch(() => {
+    app.replaceChildren(h('div', { class: 'error' },
+      h('p', null, 'No encuentro los datos del tablero.'),
+      h('p', null, 'Ejecuta ', h('code', null, 'npm run refresh'), ' en la carpeta del proyecto.')));
+  });
+})();
+</script>
+</body>
+</html>

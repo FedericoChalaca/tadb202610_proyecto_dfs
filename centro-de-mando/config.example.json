@@ -1,0 +1,74 @@
+{
+  "name": "Tu nombre",
+  "timezone": "America/Bogota",
+  "myEmails": [
+    "tu.correo@gmail.com"
+  ],
+  "actionKeywords": [
+    "urgente",
+    "favor",
+    "confirmar",
+    "pago",
+    "factura",
+    "vence"
+  ],
+  "actionWindowDays": 7,
+  "actionMatchBody": false,
+  "unansweredMinDays": 2,
+  "unansweredWindowDays": 30,
+  "unansweredOnlyIfDirect": true,
+  "travelKeywords": [
+    "vuelo",
+    "check-in",
+    "reserva",
+    "itinerario",
+    "booking",
+    "boarding",
+    "pasabordo"
+  ],
+  "travelSenders": [
+    "avianca",
+    "latam",
+    "wingo",
+    "jetsmart",
+    "copaair",
+    "airbnb.com/reserv",
+    "booking.com",
+    "despegar",
+    "noreply-travel@google.com",
+    "expedia"
+  ],
+  "travelWindowDays": 30,
+  "excludeCategories": [
+    "CATEGORY_PROMOTIONS",
+    "CATEGORY_SOCIAL",
+    "CATEGORY_UPDATES",
+    "CATEGORY_FORUMS"
+  ],
+  "excludeSenderPatterns": [
+    "no-?reply",
+    "notificacion",
+    "alertas",
+    "alerts@",
+    "facturacion",
+    "factura",
+    "^fe\\.",
+    "extractos",
+    "banco_",
+    "automated@",
+    "notifications@",
+    "comunicaciones@",
+    "siesafe@",
+    "@substack\\.com"
+  ],
+  "excludeSenders": [],
+  "excludeSubjectPatterns": [
+    "^RV: Reporte \\*FQ\\d+",
+    "eval[uú]a tu experiencia",
+    "encuesta"
+  ],
+  "vipSenders": [
+    "contador@ejemplo.com"
+  ],
+  "maxThreadsPerQuery": 150
+}

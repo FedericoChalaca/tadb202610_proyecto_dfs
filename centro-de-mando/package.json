@@ -1,0 +1,15 @@
+{
+  "name": "centro-de-mando",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tablero personal de una página a partir de Gmail y Google Calendar (solo lectura).",
+  "scripts": {
+    "auth": "node scripts/auth.js",
+    "fetch": "node fetch_data.js",
+    "fetch:raw": "node fetch_data.js --from-raw data/raw.json",
+    "open": "node scripts/open.js",
+    "refresh": "node fetch_data.js && node scripts/open.js"
+  },
+  "engines": { "node": ">=20.12" }
+}
